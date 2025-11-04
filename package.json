@@ -2,17 +2,22 @@
   "name": "ai-code-reviewer",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-"scripts": {
-  "start": "node index.js",
-  "dev": "nodemon index.js"
-},
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon node src/index.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "express": "^5.1.0"
+    "@babel/parser": "^7.28.5",
+    "@babel/traverse": "^7.28.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "mongoose": "^8.19.2",
+    "strip-comments": "^2.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
