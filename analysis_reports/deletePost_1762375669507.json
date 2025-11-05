@@ -1,0 +1,25 @@
+{
+  "endpoint": {
+    "method": "DELETE",
+    "path": "/:id",
+    "handler": "deletePost"
+  },
+  "function": {
+    "name": "deletePost",
+    "async": true,
+    "lines": 9,
+    "cleanedCode": "async (req, res) => {\r\n  try {\r\n    const post = await Post.findByIdAndDelete(req.params.id);\r\n    if (!post) return res.status(404).json({ message: \"Post not found\" });\r\n    res.status(200).json({ message: \"Post deleted successfully\" });\r\n  } catch (error) {\r\n    res.status(500).json({ message: error.message });\r\n  }\r\n}",
+    "sanitizedCode": "async (req, res) => {\r\n  try {\r\n    const post = await Post.findByIdAndDelete(req.params.id);\r\n    if (!post) return res.status(404).json({ message: \"Post not found\" });\r\n    res.status(200).json({ message: \"Post deleted successfully\" });\r\n  } catch (error) {\r\n    res.status(500).json({ message: error.message });\r\n  }\r\n}",
+    "safetyNote": "✅ Code safe and ready for AI analysis."
+  },
+  "metadata": {
+    "name": "deletePost",
+    "async": true,
+    "lineCount": 9,
+    "hasDBCall": true,
+    "hasLoops": false,
+    "hasTryCatch": true,
+    "hasErrorHandling": true
+  },
+  "timestamp": "2025-11-05T20:47:49.506Z"
+}

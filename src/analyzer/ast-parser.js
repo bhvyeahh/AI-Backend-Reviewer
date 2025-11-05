@@ -14,8 +14,7 @@
 import fs from "fs";
 import path from "path";
 import * as babelParser from "@babel/parser";
-import babelTraverse from "@babel/traverse";
-const traverse = babelTraverse.default;
+import traverse from "@babel/traverse";
 
 /**
  * Parse a given controller file and extract function logic by name
@@ -29,18 +28,25 @@ export function extractFunctionCode(filePath, handlerName) {
     return null;
   }
 
-  const code = fs.readFileSync(filePath, "utf-8");
+  const code = fs.readFileSync(filePath, "utf8");
 
-  // 1. Parse code into AST
+  // Parse JS/ESM syntax
   const ast = babelParser.parse(code, {
     sourceType: "module",
-    plugins: ["jsx", "classProperties", "topLevelAwait"],
+    plugins: [
+      "jsx",
+      "classProperties",
+      "topLevelAwait",
+      "optionalChaining",
+      "objectRestSpread",
+    ],
   });
 
   let extracted = null;
 
-  // 2. Traverse AST and look for matching function
-  traverse(ast, {
+  // Traverse the AST to find our handler
+  traverse.default(ast, {
+    // Regular named function declarations
     FunctionDeclaration(path) {
       if (path.node.id?.name === handlerName) {
         extracted = {
@@ -53,11 +59,36 @@ export function extractFunctionCode(filePath, handlerName) {
       }
     },
 
-    // Also handle arrow or function expressions exported like: export const getUsers = async () => {}
+    // Arrow or Function expressions assigned to variables
     VariableDeclarator(path) {
-      if (path.node.id.name === handlerName) {
+      if (path.node.id?.name === handlerName) {
         const init = path.node.init;
-        if (init?.type === "ArrowFunctionExpression" || init?.type === "FunctionExpression") {
+        if (
+          init &&
+          (init.type === "ArrowFunctionExpression" ||
+            init.type === "FunctionExpression")
+        ) {
+          extracted = {
+            name: handlerName,
+            code: code.slice(init.start, init.end),
+            loc: path.node.loc,
+            async: init.async || false,
+          };
+          path.stop();
+        }
+      }
+    },
+
+    // export const getUsers = ...
+    ExportNamedDeclaration(path) {
+      const decl = path.node.declaration;
+      if (
+        decl &&
+        decl.declarations &&
+        decl.declarations[0].id.name === handlerName
+      ) {
+        const init = decl.declarations[0].init;
+        if (init) {
           extracted = {
             name: handlerName,
             code: code.slice(init.start, init.end),

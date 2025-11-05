@@ -1,19 +1,15 @@
 /**
  * ---------------------------------------------------------
- * Route Reflector Module
+ * Route Reflector
  * ---------------------------------------------------------
- *  Purpose:
- *   - Scan Express route files
- *   - Identify route definitions (GET, POST, etc.)
- *   - Return structured metadata for each endpoint
+ * Purpose:
+ *   - Scan Express router files to detect endpoints
+ *   - Return structured metadata (method, path, handler, controller)
  *
- *  Works using:
- *   - Basic file read + regex pattern matching
- *
- *  Example output:
- *   [
- *     { method: 'GET', path: '/users', handler: 'getUsers', file: 'src/routes/user.routes.js' }
- *   ]
+ * Notes:
+ *   - Works for both .get(), .post(), etc.
+ *   - Supports import/export syntax (ESM)
+ *   - Can scan either a single file or a directory
  * ---------------------------------------------------------
  */
 
@@ -21,26 +17,36 @@ import fs from "fs";
 import path from "path";
 
 /**
- * Extract endpoints from a single route file
- * @param {string} filePath - absolute path to route file
- * @returns {Array} - list of {method, path, handler, file}
+ * Scan a specific route file for Express endpoints
+ * @param {string} filePath - absolute path to the route file
+ * @returns {Array} endpoints - [{ method, path, handler, controller }]
  */
-export function extractEndpointsFromFile(filePath) {
-  const code = fs.readFileSync(filePath, "utf-8");
+export function scanRoutesFile(filePath) {
+  if (!fs.existsSync(filePath)) {
+    console.warn("⚠️ Route file not found:", filePath);
+    return [];
+  }
+
+  const code = fs.readFileSync(filePath, "utf8");
+  const lines = code.split("\n");
+
   const endpoints = [];
 
-  // Simple regex to catch router.METHOD('/path', handler)
-  const routePattern =
-    /router\.(get|post|put|delete|patch|options|head)\s*\(\s*['"`]([^'"`]+)['"`]\s*,\s*([\w$]+)/gi;
+  // Detect the associated controller file (same name logic)
+  const baseName = path.basename(filePath, ".js"); // e.g., "user.routes"
+  const controllerFile = baseName.replace(".routes", ".controller.js"); // "user.controller.js"
+
+  // Simple regex to catch Express route definitions
+  const routeRegex =
+    /router\.(get|post|put|delete|patch)\(\s*["'`](.*?)["'`]\s*,\s*([a-zA-Z0-9_]+)/g;
 
   let match;
-  while ((match = routePattern.exec(code)) !== null) {
-    const [, method, routePath, handler] = match;
+  while ((match = routeRegex.exec(code)) !== null) {
     endpoints.push({
-      method: method.toUpperCase(),
-      path: routePath,
-      handler,
-      file: path.relative(process.cwd(), filePath),
+      method: match[1].toUpperCase(),
+      path: match[2],
+      handler: match[3],
+      controller: controllerFile,
     });
   }
 
@@ -48,19 +54,24 @@ export function extractEndpointsFromFile(filePath) {
 }
 
 /**
- * Scan all route files in given directory
- * @param {string} routesDir - directory path
- * @returns {Array} - all discovered routes across files
+ * Scan all route files inside a routes directory
+ * @param {string} dirPath - absolute path to routes directory
+ * @returns {Array} endpoints - combined list of all endpoints
  */
-export function scanRoutesDirectory(routesDir) {
-  const routeFiles = fs.readdirSync(routesDir).filter((f) => f.endsWith(".js"));
-  let allEndpoints = [];
+export function scanRoutesDirectory(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    console.warn("⚠️ Routes directory not found:", dirPath);
+    return [];
+  }
 
-  routeFiles.forEach((file) => {
-    const fullPath = path.join(routesDir, file);
-    const endpoints = extractEndpointsFromFile(fullPath);
-    allEndpoints = allEndpoints.concat(endpoints);
-  });
+  const files = fs.readdirSync(dirPath).filter((f) => f.endsWith(".js"));
+  const allEndpoints = [];
+
+  for (const file of files) {
+    const fullPath = path.join(dirPath, file);
+    const fileEndpoints = scanRoutesFile(fullPath);
+    allEndpoints.push(...fileEndpoints);
+  }
 
   return allEndpoints;
 }
