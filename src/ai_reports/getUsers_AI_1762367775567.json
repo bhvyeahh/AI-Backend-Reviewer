@@ -1,0 +1,5 @@
+{
+  "error": "Invalid JSON (even after auto-fix)",
+  "extracted": "{\\n  \\\"summary\\\": \\\"This endpoint fetches all user records from the database, excludes their passwords, and returns them as a  array. It includes basic error handling.\\\",\\n  \\\"issues\\\": [\\n    {\\n      \\\"description\\\": \\\"No Pagination: The `User.find()` query retrieves *all* user documents from the database. As the number of users grows, this will lead to prohibitively slow database queries, high ...",
+  "raw": "{\"sdkHttpResponse\":{\"headers\":{\"alt-svc\":\"h3=\\\":443\\\"; ma=2592000,h3-29=\\\":443\\\"; ma=2592000\",\"content-encoding\":\"gzip\",\"content-type\":\"application/json; charset=UTF-8\",\"date\":\"Wed, 05 Nov 2025 18:36:17 GMT\",\"server\":\"scaffolding on HTTPServer2\",\"server-timing\":\"gfet4t7; dur=16290\",\"transfer-encoding\":\"chunked\",\"vary\":\"Origin, X-Origin, Referer\",\"x-content-type-options\":\"nosniff\",\"x-frame-options\"..."
+}
